@@ -1,0 +1,46 @@
+
+body, canvas, div {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+canvas {
+    border: 1px solid #000;
+    width: 100%;
+    height: calc(100vh - 60px);
+}
+
+#toolbar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: white;
+}
+
+#toolbar button, #toolbar select {
+    padding: 8px 16px;
+    margin: 0 5px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#toolbar button:hover, #toolbar select:hover {
+    background-color: #cccccc;
+    color: #333;
+}
+
+#whiteboard {
+    border: 2px solid #444;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}

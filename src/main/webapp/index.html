@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Whiteboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="toolbar">
+    <button id="draw-btn">Draw</button>
+    <button id="eraseAll">Erase All</button>
+    <button id="toggleErase">Erase</button>
+
+    <label for="shape-select">Shape:</label>
+    <select id="shape-select">
+        <option value="line" selected>Line</option>
+        <option value="rectangle">Rectangle</option>
+        <option value="circle">Circle</option>
+    </select>
+
+    <label for="color-select">Color:</label>
+    <select id="color-select">
+        <option value="black" selected>Black</option>
+        <option value="red">Red</option>
+        <option value="orange">Orange</option>
+        <option value="yellow">Yellow</option>
+        <option value="green">Green</option>
+        <option value="blue">Blue</option>
+        <option value="indigo">Indigo</option>
+        <option value="violet">Violet</option>
+    </select>
+
+    <button id="toggleCanvas">Toggle Canvas</button>
+
+    <form id="fileUploadForm" action="/documents/upload" method="post" enctype="multipart/form-data">
+        <label for="fileInput">Upload (PDF/PPT/DOC/DOCX):</label>
+        <input type="file" id="fileInput" name="file" accept=".pdf, .doc, .docx">
+        <input type="submit" value="Upload File">
+    </form>
+</div>
+
+<div id="fileDisplayContainer"></div>
+
+<div id="canvasContainer">
+    <canvas id="whiteboard"></canvas>
+</div>
+
+<script src="js/whiteboard.js"></script>
+</body>
+</html>
