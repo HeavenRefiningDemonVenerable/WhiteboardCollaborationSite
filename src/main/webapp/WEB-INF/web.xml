@@ -5,18 +5,6 @@
          version="3.1">
 
 
-    <context-param>
-        <param-name>javax.ws.rs.Application</param-name>
-        <param-value>com.example.demo.HelloApplication</param-value>
-    </context-param>
-
-
-    <context-param>
-        <param-name>static.content.dir</param-name>
-        <param-value>${com.sun.aas.instanceRoot}/uploads</param-value>
-    </context-param>
-
-
 
 </web-app>
 

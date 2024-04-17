@@ -33,10 +33,10 @@
 
     <button id="toggleCanvas">Toggle Canvas</button>
 
-    <form id="fileUploadForm" action="/documents/upload" method="post" enctype="multipart/form-data">
+    <form id="fileUploadForm">
         <label for="fileInput">Upload (PDF/PPT/DOC/DOCX):</label>
-        <input type="file" id="fileInput" name="file" accept=".pdf, .doc, .docx">
-        <input type="submit" value="Upload File">
+        <input type="file" id="fileInput" name="file" accept=".pdf, .ppt, .pptx, .doc, .docx">
+        <button type="button" id="uploadBtn">Upload File</button>
     </form>
 </div>
 
