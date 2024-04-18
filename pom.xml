@@ -116,6 +116,17 @@
             <artifactId>poi-ooxml-schemas</artifactId>
             <version>4.1.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-embedded</artifactId>
+            <version>3.9.6</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.maven</groupId>
+                    <artifactId>maven-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
         <!-- Apache POI XWPFConverter to convert documents to PDF -->
         <!-- This is part of the Apache POI project but is separately managed by the ODF Toolkit -->
