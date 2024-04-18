@@ -371,6 +371,7 @@ function clearCanvas() {
     context.beginPath();
 }
 
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight - 50;
