@@ -10,11 +10,25 @@ let drawing = false;
 
 const webSocket = new WebSocket('ws://localhost:8080/demo-1.0-SNAPSHOT/whiteboard');
 
+// function to handle receiving chat messages
+webSocket.onmessage = function(event)
+{
+    const message = JSON.parse(event.data);
+    if (message.type === 'chat')
+    {
+        displayChatMessage(message.sender, message.content);
+    }
+};
+
 webSocket.onmessage = function(event) {
     const message = JSON.parse(event.data);
     if (message.type === 'new_document') {
         const displayContainer = document.getElementById('fileDisplayContainer');
         displayContainer.innerHTML = '';
+    // for syncing drawings using websocket communication
+    if (message.type === 'user_draw') {
+        drawLine(message.startX, message.startY, message.endX, message.endY, message.color);
+    }
 
         const iframe = document.createElement('iframe');
         iframe.style.width = '100%';
@@ -143,11 +157,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Chat functionality
+
+    // sending messages
+    function sendChatMessage(message)
+    {
+        if (message.trim() === '') return;
+        const chatMessage ={
+            type: 'chat',
+            content: message
+        };
+        webSocket.send(JSON.stringify(chatMessage));
+    }
+
+    // display messages
+    function displayChatMessage(sender, content)
+    {
+        const chatDisplay = document.getElementById('chatDisplay');
+        const messageElement = document.createElement('div');
+        messageElement.innerText = `${sender}: ${content}`;
+        chatDisplay.appendChild(messageElement);
+    }
 
 
+    document.getElementById('sendChatBtn').addEventListener('click', function()
+    {
+        const chatInput = document.getElementById('chatInput');
+        const message = chatInput.value;
+        sendChatMessage(message);
+        chatInput.value = ''; //Clear input field after sending
+    });
 
+    // pressing enter to send chat and clear input once sent
+    document.getElementById('chatInput').addEventListener('keypress', function(event)
+    {
+        if (event.key === 'Enter')
+        {
+            const message = this.value;
+            sendChatMessage(message);
+            this.value = '';
+        }
+    });
 
+    //Text Field functionality
+    document.getElementById('toggleText').addEventListener('click', function ()
+    {
+        let textToolEnabled = !textToolEnabled;
+        let textInput;
+        if (textToolEnabled)
+        {
+            textInput = prompt('Enter your text:');
+            if (textInput !== null && textInput !== '')
+            {
+                // allows text fields
+                canvas.addEventListener('click', addText);
+            }
+            else
+            {
+                textToolEnabled = false;
+            }
+        }
+        else
+        {
+            // disables text tool
+            canvas.removeEventListener('click', addText);
+        }
+        this.textContent = textToolEnabled ? 'Cancel Text' : 'Add Text';
+    });
 
+    function enableTextInput()
+    {
+        const text = prompt('Enter your text:');
+        let textToolEnabled;
+        if (text !== null && text.trim() !== '')
+        {
+            canvas.addEventListener('click', function (event)
+            {
+                const x = event.clientX - canvas.getBoundingClientRect().left;
+                const y = event.clientY - canvas.getBoundingClientRect().top;
+                drawText(text, x, y);
+                disableTextInput();
+            });
+        }
+        else
+        {
+            textToolEnabled = false;
+        }
+    }
+
+    function disableTextInput()
+    {
+        canvas.removeEventListener('click', addText);
+    }
+
+    function addText(text, x, y)
+    {
+        context.font = '16px Arial'; // Set default font
+        context.fillStyle = color; // Use the current color
+        context.fillText(text, x, y);
+
+        // Send text data to other users via WebSocket
+        webSocket.send(JSON.stringify(
+            {
+            type: 'new_text',
+            text: text,
+            x: x,
+            y: y,
+            color: color
+        }));
+    }
 
     canvas.addEventListener('mousedown', function(e) {
         startPosition(e);
@@ -189,7 +307,6 @@ function drawShape(x, y) {
     context.closePath();
 }
 
-
 function startPosition(e) {
     if (!drawing && !erasing) return;
     painting = true;
@@ -199,14 +316,12 @@ function startPosition(e) {
     context.moveTo(startX, startY);
 }
 
-
 function finishedPosition() {
     if (painting) {
         painting = false;
         context.closePath();
     }
 }
-
 
 function draw(e) {
     if (!painting) return;
@@ -261,6 +376,3 @@ function resizeCanvas() {
     canvas.height = window.innerHeight - 50;
     clearCanvas();
 }
-
-
-
