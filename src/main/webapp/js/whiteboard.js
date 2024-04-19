@@ -275,6 +275,3 @@ function resizeCanvas() {
     canvas.height = window.innerHeight - 50;
     clearCanvas();
 }
-
-
-
