@@ -10,6 +10,10 @@ let drawing = false;
 
 const webSocket = new WebSocket('ws://localhost:8080/demo-1.0-SNAPSHOT/whiteboard');
 
+webSocket.onopen = function(){
+    console.log("WebSocket connection opened");
+}
+
 webSocket.onmessage = function(event) {
     const message = JSON.parse(event.data);
     if (message.type === 'new_document') {
@@ -21,14 +25,16 @@ webSocket.onmessage = function(event) {
         iframe.style.height = '100vh';
         iframe.src = message.fileUrl; // Use the URL from the server's message.
         displayContainer.appendChild(iframe);
-    } else if (message.type === 'user_draw') {
-        // Handle drawing updates from other users (code added below)
+    } else if (message.type === 'draw') {
         context.beginPath();
         context.strokeStyle = message.color;
         context.lineWidth = message.lineWidth;
         context.moveTo(message.startX, message.startY);
         context.lineTo(message.endX, message.endY);
         context.stroke();
+    }  else if (message.type === "erase_all"){
+        // clear the canvas
+        clearCanvas();
     } else if (message.type === 'document_content') {
 
         const displayContainer = document.getElementById('fileDisplayContainer');
@@ -43,6 +49,9 @@ webSocket.onmessage = function(event) {
     }
 };
 
+webSocket.onclose = function (){
+    webSocket.close();
+}
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -69,7 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    document.getElementById('eraseAll').addEventListener('click', clearCanvas);
+    document.getElementById('eraseAll').addEventListener('click', function () {
+        // send message to the server to erase the canvas
+        webSocket.send(JSON.stringify({type: 'erase_all'}));
+        // clear local canvas
+        clearCanvas();
+    });
 
     document.getElementById('toggleCanvas').addEventListener('click', function () {
         canvas.style.display = (canvas.style.display === 'none') ? 'block' : 'none';
@@ -143,12 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-
-
-
-
-
-
     canvas.addEventListener('mousedown', function(e) {
         startPosition(e);
         // Add draw to the animation frame for better performance and smoothness
@@ -162,9 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
     resizeCanvas();
 
 });
-
-
-
 
 function drawShape(x, y) {
     context.beginPath();
@@ -216,16 +221,28 @@ function draw(e) {
     context.lineWidth = 5;
     context.strokeStyle = color;
 
-
     let endX = e.clientX - canvas.getBoundingClientRect().left;
     let endY = e.clientY - canvas.getBoundingClientRect().top;
 
+    // Check if startX and startY are not null
+    if (startX !== null && startY !== null) {
+        //send the drawing to the server
+        webSocket.send(JSON.stringify({
+            type: 'draw',
+            startX: startX,
+            startY: startY,
+            endX: endX,
+            endY: endY,
+            color: color,
+            lineWidth: context.lineWidth
+        }));
 
-    interpolateLine(startX, startY, endX, endY, context.lineWidth);
+        //update local canvas
+        interpolateLine(startX, startY, endX, endY, context.lineWidth);
 
-
-    startX = endX;
-    startY = endY;
+        startX = endX; // Update startX for the next segment
+        startY = endY; // Update startY for the next segment
+    }
 }
 
 function interpolateLine(startX, startY, endX, endY, lineWidth) {
@@ -247,9 +264,6 @@ function interpolateLine(startX, startY, endX, endY, lineWidth) {
         context.moveTo(x, y);
     }
 }
-
-
-
 
 function clearCanvas() {
     context.clearRect(0, 0, canvas.width, canvas.height);

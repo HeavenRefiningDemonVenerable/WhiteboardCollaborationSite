@@ -87,10 +87,6 @@ public class DocumentController {
     }
 
 
-
-
-
-
     private String getFileExtension(String fileName) {
         int lastIndex = fileName.lastIndexOf('.');
         if (lastIndex == -1) {

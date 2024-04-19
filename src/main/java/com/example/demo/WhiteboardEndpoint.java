@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
@@ -10,6 +12,7 @@ import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,23 +25,29 @@ public class WhiteboardEndpoint {
     @OnOpen
     public void onOpen(Session session) {
         sessions.add(session);
+        System.out.println("New websocket connection. ");
         session.getAsyncRemote().sendText("{\"message\":\"Welcome to the whiteboard.\"}");
     }
 
     @OnMessage
     public void onMessage(String message, Session session) throws IOException {
         try {
-            Message msg = jsonb.fromJson(message, Message.class);
-            switch (msg.getType()) {
+            Jsonb jsonb = JsonbBuilder.create();
+            JsonObject jsonObject = jsonb.fromJson(message, JsonObject.class);
+            String type = jsonObject.getString("type");
+            System.out.println("Message type: " + type);
+
+            switch (type) {
                 case "draw":
+                    broadcast(message, session);
                     break;
                 case "document":
-                    break;
+                    broadcast(message, session);
+                case "erase_all":
+                    broadcast(message, session);
                 default:
-
                     break;
             }
-            broadcast(message);
         } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());
         }
@@ -57,17 +66,40 @@ public class WhiteboardEndpoint {
         }
     }
 
-    public static void broadcast(String message) {
-        for (Session session : sessions) {
-            if (session.isOpen()) {
-                session.getAsyncRemote().sendText(message);
+    public static void broadcast(String message, Session sender) {
+        if (message != null) { // Check if message is not null
+            try {
+                JsonValue jsonValue = jsonb.fromJson(message, JsonValue.class);
+                if (jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.OBJECT) {
+                    JsonObject jsonMessage = (JsonObject) jsonValue;
+                    boolean isValid = true;
+                    for (Map.Entry<String, JsonValue> entry : jsonMessage.entrySet()) {
+                        if (!"type".equals(entry.getKey()) && entry.getValue().getValueType() == JsonValue.ValueType.NULL) {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    // Broadcast the message only if all relevant values are not null
+                    if (isValid) {
+                        for (Session session : sessions) {
+                            if (session.isOpen() && !session.equals(sender)) {
+                                System.out.print("Message sent from server: " + message);
+                                session.getAsyncRemote().sendText(message);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error processing message: " + e.getMessage());
             }
         }
     }
 
+
+
     private class Message {
-        private String type;
-        private String content;
+        public String type;
+        public String content;
 
         public Message() {}
 
